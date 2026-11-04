@@ -45,7 +45,7 @@ function AuthPage() {
   const emailRedirectTo =
     typeof window === "undefined" ? "" : `${window.location.origin}/auth?redirect=${encodeURIComponent(returnTo)}`;
 
-  const goBack = () => navigate({ to: returnTo, replace: true });
+  const goBack = () => navigate({ href: returnTo, replace: true });
 
   useEffect(() => {
     if (search.mode) setMode(search.mode);
@@ -55,12 +55,12 @@ function AuthPage() {
   // Return to the page the user came from.
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: returnTo, replace: true });
+      if (data.session) navigate({ href: returnTo, replace: true });
     });
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session) navigate({ to: returnTo, replace: true });
+      if (event === "SIGNED_IN" && session) navigate({ href: returnTo, replace: true });
     });
     return () => subscription.unsubscribe();
   }, [navigate, returnTo]);
@@ -371,7 +371,12 @@ function AuthPage() {
             </>
           )}
         </div>
-        <p className="mt-6 text-center text-xs leading-relaxed text-muted-foreground">
+        <p className="mt-6 text-center text-sm">
+          <Link to="/dashboard" className="font-medium text-primary hover:underline">
+            Continue as a guest
+          </Link>
+        </p>
+        <p className="mt-3 text-center text-xs leading-relaxed text-muted-foreground">
           Your questions and history stay private to your account. Nyaya Sakhi provides legal
           information, not legal advice.
         </p>
