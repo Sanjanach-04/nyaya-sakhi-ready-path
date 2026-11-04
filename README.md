@@ -55,8 +55,8 @@ bun run test            # vitest
 | `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` / `VITE_SUPABASE_PROJECT_ID` | Lovable Cloud auth + direct profile/role reads |
 | `VITE_API_BASE_URL` | FastAPI backend base URL, e.g. `http://localhost:8000` |
 
-When `VITE_API_BASE_URL` is missing or the backend is down, every data page
-shows a clear "Backend not configured or unreachable" state — there are no
+When the backend is not set up, every data page runs `GET {API_BASE}/api/health`
+and shows exactly what is wrong (see **Troubleshooting** below) — there are no
 mock responses anywhere.
 
 ## Backend setup
@@ -72,6 +72,90 @@ cp .env.example .env    # DATABASE_URL, SUPABASE_URL, LLM_* ...
 uvicorn app.main:app --reload --port 8000    # Swagger at /docs
 pytest tests -q
 ```
+
+## Troubleshooting: backend not configured
+
+On load (and whenever you press **Try again**) the frontend calls
+`GET {API_BASE}/api/health`, a public endpoint that returns:
+
+```json
+{ "status": "ok", "db": true, "embedding_model": true, "llm_configured": true }
+```
+
+The profile menu shows a dot: **green** = all ready, **amber** = reachable but
+something is not ready, **red** = not configured or unreachable.
+
+`API_BASE` is `VITE_API_BASE_URL`. Only when that is empty, admins (or anyone
+on a development/preview build) can set a per-browser override from
+**profile menu → Backend connection**. Overrides must be `https://…` or
+`http://localhost…`, because the user's login token is sent to that address.
+
+### a) "Nyaya Sakhi backend is not configured" (no URL set)
+
+1. Set `VITE_API_BASE_URL` to the backend's public address, no trailing slash,
+   e.g. `VITE_API_BASE_URL=https://nyaya-sakhi-api.onrender.com`
+   - locally: in `.env`
+   - published site: in `.env.production` (or your host's build settings)
+2. Rebuild / restart the frontend — Vite bakes `VITE_*` values in at build time.
+3. For quick testing without a rebuild, use **Backend connection** in the
+   profile menu (admins and dev/preview builds only).
+
+### b) "Cannot reach the backend at &lt;url&gt;"
+
+The URL is set but the browser could not get a valid `/api/health` response.
+Check, in order:
+
+| Cause | Fix |
+| --- | --- |
+| Backend not running | `cd backend && uvicorn app.main:app --port 8000` (or `docker compose up`). Open `<url>/api/health` in a browser tab — it must return JSON. |
+| `CORS_ORIGINS` missing this site's origin | Add the exact origin shown on the error card (scheme + host, no path), comma-separated, in `backend/.env`, e.g. `CORS_ORIGINS=http://localhost:8080,https://your-app.lovable.app`. Restart the backend. |
+| HTTPS site calling an `http://` URL | Browsers block this (mixed content). Serve the backend over HTTPS — use a tunnel or a host below. `http://localhost` is the only http exception. |
+| Wrong URL | Typo, missing port, an expired tunnel address, or a trailing path. A `404` status on the card usually means the URL points somewhere that isn't this backend (or an older backend without `/api/health`). |
+
+### c) "The backend is running but not ready"
+
+The card lists each part from the health response:
+
+| Part | `false` means | Fix |
+| --- | --- | --- |
+| Database (`db`) | `DATABASE_URL` missing or `select 1` failed | Set `DATABASE_URL` in `backend/.env` (pooler connection string), check password / network. |
+| Embedding model (`embedding_model`) | `sentence-transformers` not installed or `EMBEDDING_MODEL` empty | `pip install -r requirements.txt`; keep `EMBEDDING_MODEL` set. The model loads on first use. |
+| LLM API key (`llm_configured`) | One of `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL` is empty | Set all three in `backend/.env` and restart. |
+
+### Exposing a local backend over HTTPS
+
+A hosted (HTTPS) frontend cannot call `http://localhost` on *your* machine
+reliably. Tunnel it:
+
+```bash
+# ngrok
+ngrok http 8000
+# → https://abcd-1234.ngrok-free.app
+
+# Cloudflare quick tunnel (no account needed)
+cloudflared tunnel --url http://localhost:8000
+# → https://random-words.trycloudflare.com
+```
+
+Then set `VITE_API_BASE_URL` (or the Backend connection override) to the
+tunnel URL, and add the frontend's origin to `CORS_ORIGINS`. Quick-tunnel URLs
+change every run — update the setting each time.
+
+### Deploying the backend
+
+**Render** — New → Web Service → connect the repo, root directory `backend`,
+runtime Docker (uses `backend/Dockerfile`). Add the variables from
+`backend/.env.example` (`DATABASE_URL`, `SUPABASE_URL`, `LLM_*`,
+`CORS_ORIGINS` …). Render gives you `https://<name>.onrender.com`.
+
+**Railway** — New Project → Deploy from GitHub → set the service root to
+`backend` (Dockerfile is detected). Add the same variables, then
+Settings → Networking → Generate Domain for an `https://…up.railway.app` URL.
+
+The Dockerfile listens on port 8000; if the host injects `PORT`, set the start
+command to `uvicorn app.main:app --host 0.0.0.0 --port $PORT`. After deploying,
+open `<url>/api/health`, then set `VITE_API_BASE_URL` to that URL and rebuild
+the frontend.
 
 ## Database setup & migrations
 
