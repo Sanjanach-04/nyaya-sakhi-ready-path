@@ -152,7 +152,7 @@ function DiagnosisBody({ diag, canConfigure }: { diag: BackendDiagnosis; canConf
   return (
     <>
       <StateIcon><ServerCrash className="h-7 w-7" aria-hidden /></StateIcon>
-      <h1 className="mt-5 font-display text-2xl">{t("conn.unreachableTitle")}</h1>
+      <h1 className="mt-5 font-display text-2xl">{t("conn.pageFailedTitle")}</h1>
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{t("conn.okButFailed")}</p>
     </>
   );
@@ -175,8 +175,10 @@ export function BackendUnavailableInline() {
   const title =
     diag?.state === "unhealthy"
       ? t("conn.unhealthyTitle")
-      : diag?.state === "unreachable" || diag?.state === "ok"
-        ? t("conn.unreachableTitle")
+      : diag?.state === "ok"
+        ? t("conn.pageFailedTitle")
+        : diag?.state === "unreachable"
+          ? t("conn.unreachableTitle")
         : t("conn.unconfiguredTitle");
   return (
     <div className="rounded-2xl border border-dashed border-border bg-muted/40 px-5 py-6 text-center text-sm text-muted-foreground">

@@ -84,6 +84,7 @@ export const en = {
   "conn.partLlm": "LLM API key",
   "conn.ready": "Ready",
   "conn.notReady": "Not ready",
+  "conn.pageFailedTitle": "This page could not load",
   "conn.okButFailed": "The backend looks healthy, but this page's request failed. Try again in a moment.",
   "conn.dialogTitle": "Backend connection",
   "conn.dialogDesc": "Point this browser at a Nyaya Sakhi backend. The address is saved only on this device.",

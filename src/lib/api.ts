@@ -48,7 +48,12 @@ export class ApiError extends Error {
 
 /** True when the error means "show the backend setup state instead of a failure". */
 export function isBackendStateError(error: unknown): boolean {
-  return error instanceof ApiError && (error.kind === "unconfigured" || error.kind === "unreachable");
+  // 5xx is included so pages show the health diagnostics (e.g. database not
+  // ready) instead of an empty list.
+  return (
+    error instanceof ApiError &&
+    (error.kind === "unconfigured" || error.kind === "unreachable" || error.kind === "server")
+  );
 }
 
 const KIND_TOAST: Record<ApiErrorKind, string | null> = {
