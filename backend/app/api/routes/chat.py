@@ -3,12 +3,13 @@ from __future__ import annotations
 
 import json
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.core.security import CurrentUser
-from app.db import get_db
+from app.core.rate_limit import enforce_guest_chat_limit
+from app.core.security import CurrentUser, OptionalUser
+from app.db import get_db, get_public_db
 from app.schemas import (
     AskRequest,
     ChatAnswer,
@@ -102,37 +103,57 @@ def _next_steps(question: str, refused: bool) -> list[NextStepOption]:
 
 
 @router.post("/ask", response_model=ChatAnswer)
-def ask(payload: AskRequest, user: CurrentUser, db: Session = Depends(get_db)) -> ChatAnswer:
-    session_id = payload.session_id
-    if session_id:
-        if not _session_exists(db, session_id, user.id):
+def ask(
+    payload: AskRequest,
+    request: Request,
+    user: OptionalUser,
+    db: Session = Depends(get_public_db),
+) -> ChatAnswer:
+    """RAG answer for signed-in users AND guests.
+
+    The same approved-only retrieval, similarity threshold, context-only LLM
+    and citation validation run for everyone. Guests (no valid token) are
+    rate limited per IP and NOTHING is stored for them: no session, no
+    messages, no usage events. The guest conversation lives in the browser.
+    """
+    guest = user is None
+    uid = None if guest else user.id
+    session_id: str | None = payload.session_id
+
+    if guest:
+        enforce_guest_chat_limit(request)
+        session_id = None  # guests never read or write stored conversations
+    elif session_id:
+        if not _session_exists(db, session_id, uid):
             raise HTTPException(status_code=404, detail="Conversation not found")
     else:
         title = payload.question[:60]
         row_id = db.execute(
             text("insert into public.chat_sessions (user_id, title, language) values (:uid, :title, :lang) returning id"),
-            {"uid": user.id, "title": title, "lang": payload.language},
+            {"uid": uid, "title": title, "lang": payload.language},
         ).scalar_one()
         session_id = str(row_id)
         db.commit()
 
-    _insert_message(db, session_id, user.id, "user", payload.question, language=payload.language)
-    usage.log_event(db, user.id, "chat_question")
+    def store(role: str, content: str, **kwargs) -> str | None:
+        if guest or session_id is None:
+            return None
+        return _insert_message(db, session_id, uid, role, content, **kwargs)
+
+    store("user", payload.question, language=payload.language)
+    usage.log_event(db, uid, "chat_question")
 
     try:
         result = rag_retrieval.retrieve_for_question(db, payload.question)
     except Exception:
-        usage.log_event(db, user.id, "chat_refusal")
+        usage.log_event(db, uid, "chat_refusal")
         raise
 
     if not result.chunks:
         refusal = refusal_confidence.refusal_for(result.chunks, result.best_similarity)
         kind = "out_of_scope" if result.best_similarity is not None else "no_retrieval"
-        message_id = _insert_message(
-            db, session_id, user.id, "assistant", refusal,
-            refused=True, language=payload.language,
-        )
-        usage.log_event(db, user.id, "chat_refusal")
+        message_id = store("assistant", refusal, refused=True, language=payload.language)
+        usage.log_event(db, uid, "chat_refusal")
         return ChatAnswer(
             session_id=session_id,
             message_id=message_id,
@@ -151,12 +172,9 @@ def ask(payload: AskRequest, user: CurrentUser, db: Session = Depends(get_db)) -
     except (ValueError, citation_validation.CitationValidationError):
         # Fabricated or invalid output → the same safe refusal, logged.
         refusal = refusal_confidence.REFUSAL_VALIDATION
-        message_id = _insert_message(
-            db, session_id, user.id, "assistant", refusal,
-            refused=True, language=payload.language,
-        )
-        usage.log_event(db, user.id, "chat_refusal_validation")
-        usage.log_event(db, user.id, "chat_refusal")
+        message_id = store("assistant", refusal, refused=True, language=payload.language)
+        usage.log_event(db, uid, "chat_refusal_validation")
+        usage.log_event(db, uid, "chat_refusal")
         return ChatAnswer(
             session_id=session_id,
             message_id=message_id,
@@ -189,12 +207,12 @@ def ask(payload: AskRequest, user: CurrentUser, db: Session = Depends(get_db)) -
     act_name = citations[0].act if citations else None
     section_number = citations[0].section if citations else None
 
-    message_id = _insert_message(
-        db, session_id, user.id, "assistant", explanation,
+    message_id = store(
+        "assistant", explanation,
         citations=[c.model_dump() for c in citations],
         refused=False, is_demo=is_demo, language=payload.language,
     )
-    usage.log_event(db, user.id, "chat_answered")
+    usage.log_event(db, uid, "chat_answered")
 
     return ChatAnswer(
         session_id=session_id,
