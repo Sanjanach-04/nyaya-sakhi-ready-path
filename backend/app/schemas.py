@@ -52,7 +52,8 @@ class AskRequest(BaseModel):
 
 
 class ChatAnswer(BaseModel):
-    session_id: str
+    # None for guests: guest answers are never stored.
+    session_id: str | None = None
     message_id: str | None = None
     refused: bool = False
     refusal_reason: str | None = None

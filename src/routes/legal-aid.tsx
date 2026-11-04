@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export const Route = createFileRoute("/_authenticated/legal-aid")({
+export const Route = createFileRoute("/legal-aid")({
   head: () => ({
     meta: [
       { title: "Legal Aid & Support — Nyaya Sakhi" },

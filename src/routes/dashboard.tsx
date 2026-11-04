@@ -17,7 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AppShell, useMyRoles } from "@/components/app-shell";
 import { useI18n } from "@/i18n";
 
-export const Route = createFileRoute("/_authenticated/dashboard")({
+export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
       { title: "Your dashboard — Nyaya Sakhi" },

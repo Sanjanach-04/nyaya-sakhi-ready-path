@@ -32,7 +32,7 @@ def test_error_schema_is_consistent(app):
     client = TestClient(app, raise_server_exceptions=False)
     # Auth runs before body validation: a missing token is always a clean 401
     # with the consistent {"detail": ...} error schema.
-    res = client.post("/api/chat/ask", json={"question": "x"})
+    res = client.get("/api/chat/history")
     assert res.status_code == 401
     body = res.json()
     assert "detail" in body
@@ -55,7 +55,7 @@ def test_forged_and_malformed_tokens_are_401_not_500(app, monkeypatch):
     client = TestClient(app, raise_server_exceptions=False)
     forged = jwt.encode({"sub": "x", "exp": int(time.time()) + 600}, "wrong-secret", algorithm="HS256")
     for token in (forged, "not-a-jwt"):
-        res = client.get("/api/legal/acts", headers={"Authorization": f"Bearer {token}"})
+        res = client.get("/api/chat/history", headers={"Authorization": f"Bearer {token}"})
         assert res.status_code == 401, (token, res.status_code)
 
 
@@ -63,5 +63,5 @@ def test_missing_token_rejected_on_data_endpoints(app):
     from fastapi.testclient import TestClient
 
     client = TestClient(app, raise_server_exceptions=False)
-    for path in ("/api/legal/acts", "/api/emergency", "/api/schemes", "/api/chat/history"):
+    for path in ("/api/chat/history", "/api/saved", "/api/complaints", "/api/auth/profile", "/api/admin/stats"):
         assert client.get(path).status_code == 401, path

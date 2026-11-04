@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 
-export const Route = createFileRoute("/_authenticated/drafter")({
+export const Route = createFileRoute("/drafter")({
   head: () => ({
     meta: [
       { title: "Complaint & Application Helper — Nyaya Sakhi" },

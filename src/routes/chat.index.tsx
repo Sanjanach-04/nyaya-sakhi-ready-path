@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ChatWorkspace } from "@/components/chat/chat-workspace";
 
-export const Route = createFileRoute("/_authenticated/chat")({
+export const Route = createFileRoute("/chat/")({
   head: () => ({
     meta: [
       { title: "AI Legal Assistant — Nyaya Sakhi" },

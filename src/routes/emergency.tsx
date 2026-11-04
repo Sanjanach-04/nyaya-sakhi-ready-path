@@ -6,7 +6,7 @@ import { AppShell } from "@/components/app-shell";
 import { BackendUnavailableState } from "@/components/backend-state";
 import { useI18n } from "@/i18n";
 
-export const Route = createFileRoute("/_authenticated/emergency")({
+export const Route = createFileRoute("/emergency")({
   head: () => ({
     meta: [
       { title: "Emergency Helplines — Nyaya Sakhi" },

@@ -47,6 +47,13 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173,http://localhost:8080"
     LOG_LEVEL: str = "INFO"
 
+    # Guest (signed-out) chat protection: per-IP requests per hour to
+    # /api/chat/ask. In-memory, per backend process. Set TRUST_PROXY_HEADERS
+    # only behind a proxy you control (Render/Railway/nginx) so the client IP
+    # is read from X-Forwarded-For.
+    GUEST_CHAT_LIMIT_PER_HOUR: int = 20
+    TRUST_PROXY_HEADERS: bool = False
+
     @property
     def sqlalchemy_url(self) -> str:
         url = self.DATABASE_URL

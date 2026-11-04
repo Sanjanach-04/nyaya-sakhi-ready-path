@@ -15,7 +15,7 @@ if TYPE_CHECKING:  # pragma: no cover - type-only import
 # Imported at runtime: FastAPI resolves dependency annotations against module
 # globals, so get_current_user must be a real symbol here. app.core.security
 # only imports app.db lazily inside is_admin, so this is not a cycle.
-from app.core.security import AuthUser, get_current_user
+from app.core.security import AuthUser, get_current_user, get_optional_user
 
 from app.core.config import settings
 
@@ -81,6 +81,38 @@ def get_db(user: Annotated[AuthUser, Depends(get_current_user)]) -> Iterator[Ses
                  "set_config('request.jwt.claims', :claims, true)"),
             {"claims": json.dumps(claims)},
         )
+        yield db
+    finally:
+        db.close()
+
+
+def get_public_db(
+    user: Annotated[AuthUser | None, Depends(get_optional_user)],
+) -> Iterator[Session]:
+    """Session for PUBLIC endpoints (guests allowed).
+
+    Guests run as the Postgres `anon` role, so only the public-read RLS
+    policies apply (approved legal documents/chunks, schemes, emergency
+    contacts, legal aid, legal sources). A signed-in caller runs as
+    `authenticated` with their claims, exactly like get_db.
+    """
+    db = SessionLocal()
+    try:
+        if user is None:
+            db.execute(
+                text("select set_config('role', 'anon', true), "
+                     "set_config('request.jwt.claims', :claims, true)"),
+                {"claims": json.dumps({"role": "anon"})},
+            )
+        else:
+            claims = {"sub": user.id, "role": "authenticated"}
+            if getattr(user, "email", None):
+                claims["email"] = user.email
+            db.execute(
+                text("select set_config('role', 'authenticated', true), "
+                     "set_config('request.jwt.claims', :claims, true)"),
+                {"claims": json.dumps(claims)},
+            )
         yield db
     finally:
         db.close()

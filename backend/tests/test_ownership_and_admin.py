@@ -83,6 +83,8 @@ def recording_overrides(app):
             app.dependency_overrides[mod.get_db] = override_db
         if hasattr(mod, "get_admin_db"):
             app.dependency_overrides[mod.get_admin_db] = override_db
+        if hasattr(mod, "get_public_db"):
+            app.dependency_overrides[mod.get_public_db] = override_db
     yield
     app.dependency_overrides.clear()
     RECORDED.clear()
@@ -118,6 +120,8 @@ def test_admin_endpoints_reject_anonymous(anon_client):
     assert res.status_code in (401, 403)
 
 
-def test_chat_ask_requires_auth(anon_client):
-    res = anon_client.post("/api/chat/ask", json={"question": "What is my right?"})
-    assert res.status_code in (401, 403)
+def test_chat_history_requires_auth(anon_client):
+    """Guests may ask, but stored chat history always needs a signed-in user."""
+    assert anon_client.get("/api/chat/history").status_code == 401
+    assert anon_client.get("/api/chat/history/abc").status_code == 401
+    assert anon_client.delete("/api/chat/history").status_code == 401

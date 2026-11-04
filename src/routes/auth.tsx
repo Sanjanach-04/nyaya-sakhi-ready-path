@@ -5,9 +5,13 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { z } from "zod";
+import { ResendConfirmation } from "@/components/resend-confirmation";
+import { authErrorMessage, classifyAuthError, safeRedirect, signUpOutcome } from "@/lib/auth-helpers";
 
 const authSearchSchema = z.object({
   mode: z.enum(["signin", "signup"]).optional(),
+  /** Same-origin path to return to after signing in (sanitised by safeRedirect). */
+  redirect: z.string().max(2000).optional(),
 });
 
 export const Route = createFileRoute("/auth")({
@@ -35,13 +39,31 @@ function AuthPage() {
   const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
   const [awaitingEmailConfirm, setAwaitingEmailConfirm] = useState(false);
+  /** Shown above the form: unconfirmed email (with resend) or other problems. */
+  const [notice, setNotice] = useState<{ kind: "unconfirmed" | "error"; text: string } | null>(null);
+  const returnTo = safeRedirect(search.redirect);
+  const emailRedirectTo =
+    typeof window === "undefined" ? "" : `${window.location.origin}/auth?redirect=${encodeURIComponent(returnTo)}`;
 
-  // Already signed in? Go straight to the dashboard.
+  const goBack = () => navigate({ href: returnTo, replace: true });
+
+  useEffect(() => {
+    if (search.mode) setMode(search.mode);
+  }, [search.mode]);
+
+  // Already signed in (or just came back from Google / the email link)?
+  // Return to the page the user came from.
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard", replace: true });
+      if (data.session) navigate({ href: returnTo, replace: true });
     });
-  }, [navigate]);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session) navigate({ href: returnTo, replace: true });
+    });
+    return () => subscription.unsubscribe();
+  }, [navigate, returnTo]);
 
   const validate = (): string | null => {
     if (!/^\S+@\S+\.\S+$/.test(email)) return "Please enter a valid email address.";
@@ -60,36 +82,51 @@ function AuthPage() {
       return;
     }
     setBusy(true);
+    setNotice(null);
     try {
       if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
-          toast.error(error.message);
+          if (classifyAuthError(error) === "email_not_confirmed") {
+            setNotice({ kind: "unconfirmed", text: authErrorMessage(error) });
+          } else {
+            setNotice({ kind: "error", text: authErrorMessage(error) });
+            toast.error(authErrorMessage(error));
+          }
           return;
         }
-        navigate({ to: "/dashboard", replace: true });
+        goBack();
       } else if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo,
             data: { display_name: displayName.trim() },
           },
         });
         if (error) {
-          toast.error(error.message);
+          setNotice({ kind: "error", text: authErrorMessage(error) });
+          toast.error(authErrorMessage(error));
           return;
         }
-        // With email confirmation enabled the user is not signed in yet.
-        if (!data.session) setAwaitingEmailConfirm(true);
-        else navigate({ to: "/dashboard", replace: true });
+        // Works with "Confirm email" ON (no session yet) or OFF (signed in now).
+        const outcome = signUpOutcome(data);
+        if (outcome === "signed_in") goBack();
+        else if (outcome === "confirm_email") setAwaitingEmailConfirm(true);
+        else {
+          setMode("signin");
+          setNotice({
+            kind: "unconfirmed",
+            text: "An account with this email already exists. Sign in — or, if you never confirmed it, resend the confirmation email.",
+          });
+        }
       } else {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/reset-password`,
         });
         if (error) {
-          toast.error(error.message);
+          toast.error(authErrorMessage(error));
           return;
         }
         toast.success("Password reset link sent. Please check your email.");
@@ -103,8 +140,9 @@ function AuthPage() {
   const handleOAuth = async (provider: "google" | "lovable") => {
     setBusy(true);
     try {
+      // Return to this public page; it forwards to `returnTo` once the session is set.
       const result = await lovable.auth.signInWithOAuth(provider, {
-        redirect_uri: window.location.origin,
+        redirect_uri: emailRedirectTo,
       });
       if (result.error) toast.error(result.error.message);
       // When redirected to the provider, the browser navigates away — nothing to do.
@@ -138,12 +176,15 @@ function AuthPage() {
                 We sent a confirmation link to <strong className="text-foreground">{email}</strong>.
                 Click it to activate your account, then sign in.
               </p>
+              <div className="mt-6">
+                <ResendConfirmation email={email} emailRedirectTo={emailRedirectTo} startCoolingDown />
+              </div>
               <button
                 onClick={() => {
                   setAwaitingEmailConfirm(false);
                   setMode("signin");
                 }}
-                className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
               >
                 Back to sign in
               </button>
@@ -167,7 +208,10 @@ function AuthPage() {
                   <button
                     key={value}
                     type="button"
-                    onClick={() => setMode(value)}
+                    onClick={() => {
+                      setMode(value);
+                      setNotice(null);
+                    }}
                     className={`h-9 flex-1 rounded-full text-sm font-medium transition-colors ${
                       mode === value
                         ? "bg-primary text-primary-foreground"
@@ -178,6 +222,22 @@ function AuthPage() {
                   </button>
                 ))}
               </div>
+
+              {notice && (
+                <div
+                  role="alert"
+                  className={`mt-5 space-y-3 rounded-2xl border p-4 text-sm leading-relaxed ${
+                    notice.kind === "unconfirmed"
+                      ? "border-status-warn/40 bg-status-warn/10 text-foreground"
+                      : "border-destructive/40 bg-destructive/10 text-foreground"
+                  }`}
+                >
+                  <p>{notice.text}</p>
+                  {notice.kind === "unconfirmed" && (
+                    <ResendConfirmation email={email} emailRedirectTo={emailRedirectTo} />
+                  )}
+                </div>
+              )}
 
               <form onSubmit={handleSubmit} className="mt-6 space-y-4">
                 {mode === "signup" && (
@@ -311,7 +371,12 @@ function AuthPage() {
             </>
           )}
         </div>
-        <p className="mt-6 text-center text-xs leading-relaxed text-muted-foreground">
+        <p className="mt-6 text-center text-sm">
+          <Link to="/dashboard" className="font-medium text-primary hover:underline">
+            Continue as a guest
+          </Link>
+        </p>
+        <p className="mt-3 text-center text-xs leading-relaxed text-muted-foreground">
           Your questions and history stay private to your account. Nyaya Sakhi provides legal
           information, not legal advice.
         </p>

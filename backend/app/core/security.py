@@ -110,6 +110,29 @@ def get_current_user(
     return AuthUser(id=user_id, email=claims.get("email"), claims=claims)
 
 
+def get_optional_user(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
+) -> AuthUser | None:
+    """Public endpoints: the verified user when a valid token is sent, else None.
+
+    A missing, malformed, forged or expired token means "guest" (None), never
+    an error — guests only ever get public data. If the signing keys cannot be
+    reached (503) the error is still raised so it is visible.
+    """
+    if credentials is None or not credentials.credentials:
+        return None
+    try:
+        claims = verify_token(credentials.credentials)
+    except HTTPException as exc:
+        if exc.status_code == 401:
+            return None
+        raise
+    user_id = claims.get("sub")
+    if not user_id:
+        return None
+    return AuthUser(id=user_id, email=claims.get("email"), claims=claims)
+
+
 def is_admin(user: AuthUser) -> bool:
     """Check the user_roles table for an admin/moderator role.
 
@@ -142,6 +165,7 @@ def require_admin(user: Annotated[AuthUser, Depends(get_current_user)]) -> AuthU
 # avoid an import cycle (app.db imports AuthUser from here).
 CurrentUser = Annotated[AuthUser, Depends(get_current_user)]
 AdminUser = Annotated[AuthUser, Depends(require_admin)]
+OptionalUser = Annotated[AuthUser | None, Depends(get_optional_user)]
 
 
 def not_found(detail: str = "Not found") -> HTTPException:
