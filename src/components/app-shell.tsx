@@ -1,11 +1,20 @@
 import * as React from "react";
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Menu, Scale, Siren, LogOut, UserRound, Languages, Check } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Menu, Scale, Siren, LogOut, UserRound, Languages, Check, PlugZap } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, LANGUAGES, type LanguageCode } from "@/i18n";
 import { NAV_ITEMS } from "@/lib/nav";
+import { useMyRoles } from "@/hooks/use-my-roles";
+import {
+  BackendConnectionDialog,
+  ConnectionDot,
+  ConnectionStatusLabel,
+  connectionTone,
+  useBackendHealth,
+  useCanConfigureBackend,
+} from "@/components/backend-connection";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import {
   DropdownMenu,
@@ -16,28 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-/** Read the signed-in user's app roles (own rows only, via RLS). */
-export function useMyRoles() {
-  return useQuery({
-    queryKey: ["my-roles"],
-    queryFn: async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData.user?.id;
-      if (!userId) return { userId: null, isAdmin: false, email: null as string | null };
-      const { data: roles, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId);
-      if (error) throw error;
-      return {
-        userId,
-        isAdmin: roles.some((r) => r.role === "admin"),
-        email: userData.user?.email ?? null,
-      };
-    },
-    staleTime: 60_000,
-  });
-}
+export { useMyRoles };
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { t, language, setLanguage } = useI18n();
@@ -46,6 +34,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { data: me } = useMyRoles();
   const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [connectionOpen, setConnectionOpen] = React.useState(false);
+  // Health check on app load; "Try again" anywhere re-runs it.
+  const health = useBackendHealth();
+  const tone = health.isFetching && !health.data ? "checking" : connectionTone(health.data);
+  const canConfigureBackend = useCanConfigureBackend();
 
   const navItems = NAV_ITEMS.filter((item) => !item.adminOnly || me?.isAdmin);
 
@@ -74,13 +67,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   const logo = (
-    <Link to="/dashboard" className="flex items-center gap-2.5">
-      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+    <Link to="/dashboard" aria-label={t("app.name")} className="flex min-w-0 shrink-0 items-center gap-2.5">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground sm:h-10 sm:w-10">
         <Scale className="h-5 w-5" aria-hidden />
       </span>
-      <span className="font-display text-xl leading-none">
-        {t("app.name")}
-        <span className="block font-sans text-[10px] font-medium tracking-wide text-muted-foreground">
+      <span className="hidden flex-col sm:flex">
+        <span className="whitespace-nowrap font-display text-xl leading-none">{t("app.name")}</span>
+        <span className="mt-0.5 hidden whitespace-nowrap font-sans text-[10px] font-medium leading-none tracking-wide text-muted-foreground xl:block">
+          {t("app.tagline")}
+        </span>
+      </span>
+    </Link>
+  );
+
+  const drawerLogo = (
+    <Link to="/dashboard" onClick={() => setDrawerOpen(false)} className="flex items-center gap-2.5">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+        <Scale className="h-5 w-5" aria-hidden />
+      </span>
+      <span className="flex flex-col">
+        <span className="whitespace-nowrap font-display text-xl leading-none">{t("app.name")}</span>
+        <span className="mt-1 whitespace-nowrap font-sans text-[10px] font-medium leading-none tracking-wide text-muted-foreground">
           {t("app.tagline")}
         </span>
       </span>
@@ -88,14 +95,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   );
 
   const navLinkClass = (active: boolean) =>
-    `rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-ring ${
+    `whitespace-nowrap rounded-full px-2.5 py-1.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-ring ${
       active ? "bg-secondary text-secondary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"
     }`;
 
   const emergencyButton = (
     <Link
       to="/emergency"
-      className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-accent px-3.5 text-sm font-semibold text-accent-foreground transition-colors hover:bg-accent/80 focus-visible:outline-2 focus-visible:outline-ring"
+      className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-accent px-3 text-sm font-semibold text-accent-foreground transition-colors hover:bg-accent/80 focus-visible:outline-2 focus-visible:outline-ring"
     >
       <Siren className="h-4 w-4" aria-hidden />
       <span className={pathname === "/emergency" ? "underline" : undefined}>{t("shell.emergency")}</span>
@@ -106,7 +113,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label={t("shell.language")}
-        className="inline-flex h-9 items-center gap-1.5 rounded-full border border-input bg-card px-3 text-sm font-medium transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
+        className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-input bg-card px-2.5 text-sm font-medium transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
       >
         <Languages className="h-4 w-4" aria-hidden />
         <span className="hidden sm:inline">
@@ -132,14 +139,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label={t("shell.profileMenu")}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-input bg-card transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
+        className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-input bg-card transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
       >
         <UserRound className="h-4 w-4" aria-hidden />
+        <ConnectionDot tone={tone} className="absolute -right-0.5 -top-0.5 ring-2 ring-background" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-52">
         <DropdownMenuLabel className="truncate">
           {me?.email ?? t("nav.profile")}
         </DropdownMenuLabel>
+        <div className="px-2 pb-1.5">
+          <ConnectionStatusLabel />
+        </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => router.navigate({ to: "/profile" })}>
           {t("nav.profile")}
@@ -147,6 +158,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {me?.isAdmin && (
           <DropdownMenuItem onClick={() => router.navigate({ to: "/admin" })}>
             {t("nav.admin")}
+          </DropdownMenuItem>
+        )}
+        {canConfigureBackend && (
+          <DropdownMenuItem onSelect={() => setConnectionOpen(true)}>
+            <PlugZap className="h-4 w-4" aria-hidden />
+            {t("conn.menuItem")}
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
@@ -162,12 +179,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
       <SheetTrigger
         aria-label={t("shell.openMenu")}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-input bg-card transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring md:hidden"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-input bg-card transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring lg:hidden"
       >
         <Menu className="h-5 w-5" aria-hidden />
       </SheetTrigger>
       <SheetContent side="left" className="w-72 p-0">
-        <div className="border-b border-border/60 p-4">{logo}</div>
+        <div className="border-b border-border/60 p-4">{drawerLogo}</div>
         <nav className="flex flex-col gap-1 p-3" aria-label={t("nav.menu")}>
           {navItems.map((item) => (
             <Link
@@ -200,23 +217,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-4">
+        <div className="mx-auto flex h-16 max-w-7xl items-center gap-2 px-3 sm:px-4">
           {mobileDrawer}
           {logo}
-          <nav className="ml-4 hidden items-center gap-1 lg:flex" aria-label={t("nav.menu")}>
+          <nav className="ml-2 hidden min-w-0 items-center gap-0.5 lg:flex xl:ml-4" aria-label={t("nav.menu")}>
             {navItems.slice(0, 7).map((item) => (
               <Link key={item.to} to={item.to} className={navLinkClass(pathname.startsWith(item.to))}>
-                {t(item.key)}
+                {t(item.shortKey ?? item.key)}
               </Link>
             ))}
           </nav>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
             {emergencyButton}
             {languageMenu}
             {profileMenu}
           </div>
         </div>
       </header>
+      {canConfigureBackend && (
+        <BackendConnectionDialog open={connectionOpen} onOpenChange={setConnectionOpen} />
+      )}
       <main className="flex-1">{children}</main>
       <footer className="border-t border-border/60 py-4">
         <p className="mx-auto max-w-6xl px-4 text-center text-[11px] leading-relaxed text-muted-foreground">
