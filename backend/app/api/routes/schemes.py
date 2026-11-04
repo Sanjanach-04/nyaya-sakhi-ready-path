@@ -7,8 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.core.security import CurrentUser
-from app.db import get_db
+from app.core.security import OptionalUser
+from app.db import get_public_db
 from app.models import GovernmentScheme
 from app.schemas import EligibilityAnswers, EligibilityRecommendation, SchemeOut
 from app.services import eligibility as eligibility_service
@@ -19,12 +19,12 @@ router = APIRouter(prefix="/api/schemes", tags=["schemes"])
 
 @router.get("", response_model=list[SchemeOut])
 def list_schemes(
-    user: CurrentUser,
+    user: OptionalUser,
     q: str | None = None,
     level: str | None = None,
     state: str | None = None,
     category: str | None = None,
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_public_db),
 ) -> list[SchemeOut]:
     sql = "select * from public.government_schemes where true"
     params: dict = {}
@@ -46,7 +46,7 @@ def list_schemes(
 
 
 @router.get("/{scheme_id}", response_model=SchemeOut)
-def scheme_detail(scheme_id: str, user: CurrentUser, db: Session = Depends(get_db)) -> SchemeOut:
+def scheme_detail(scheme_id: str, user: OptionalUser, db: Session = Depends(get_public_db)) -> SchemeOut:
     row = db.execute(
         text("select * from public.government_schemes where id = :sid"), {"sid": scheme_id}
     ).mappings().first()
@@ -57,12 +57,12 @@ def scheme_detail(scheme_id: str, user: CurrentUser, db: Session = Depends(get_d
 
 @router.post("/recommend", response_model=EligibilityRecommendation)
 def recommend(
-    payload: EligibilityAnswers, user: CurrentUser, db: Session = Depends(get_db)
+    payload: EligibilityAnswers, user: OptionalUser, db: Session = Depends(get_public_db)
 ) -> EligibilityRecommendation:
     rows = db.execute(text("select * from public.government_schemes order by name")).mappings().all()
     schemes = [GovernmentScheme(**dict(r)) for r in rows]
     buckets = eligibility_service.group_eligibility(schemes, payload)
-    usage.log_event(db, user.id, "scheme_recommendation")
+    usage.log_event(db, user.id if user else None, "scheme_recommendation")
 
     recommendation = EligibilityRecommendation(
         results=buckets["potentially_eligible"] + buckets["needs_verification"] + buckets["not_matching"],
@@ -70,7 +70,9 @@ def recommend(
         needs_verification=buckets["needs_verification"],
         not_matching=buckets["not_matching"],
     )
-    # Store the questionnaire response for the user's history.
+    # Store the questionnaire response for the user's history (never for guests).
+    if user is None:
+        return recommendation
     try:
         db.execute(
             text(

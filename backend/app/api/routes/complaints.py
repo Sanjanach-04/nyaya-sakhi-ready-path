@@ -7,8 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.core.security import CurrentUser
-from app.db import get_db
+from app.core.security import CurrentUser, OptionalUser
+from app.db import get_db, get_public_db
 from app.schemas import (
     ComplaintDraftCreate,
     ComplaintDraftOut,
@@ -36,14 +36,15 @@ def _row_to_draft(r) -> ComplaintDraftOut:
 
 
 @router.get("/templates", response_model=list[ComplaintTemplate])
-def templates(user: CurrentUser) -> list[ComplaintTemplate]:
+def templates(user: OptionalUser) -> list[ComplaintTemplate]:
     return drafter_service.TEMPLATES
 
 
 @router.post("/generate")
 def generate(
-    payload: ComplaintGenerateRequest, user: CurrentUser, db: Session = Depends(get_db)
+    payload: ComplaintGenerateRequest, user: OptionalUser, db: Session = Depends(get_public_db)
 ) -> dict:
+    """Public: guests can generate and download a draft; nothing is stored for them."""
     template = drafter_service.get_template(payload.document_type)
     if not template:
         raise HTTPException(status_code=404, detail="Unknown template")
@@ -58,7 +59,7 @@ def generate(
     from app.services import translation as translation_service
 
     body, _translated = translation_service.translate_text(body, payload.language)
-    usage.log_event(db, user.id, "draft_generated")
+    usage.log_event(db, user.id if user else None, "draft_generated")
     return {"title": title, "draft_content": body}
 
 

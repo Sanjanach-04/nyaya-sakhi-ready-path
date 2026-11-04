@@ -8,14 +8,14 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.core.security import CurrentUser
-from app.db import get_db
+from app.db import get_db, get_public_db
 from app.schemas import EmergencyContactOut, LegalAidAuthorityOut, SavedItemCreate, SavedItemOut
 
 router = APIRouter(tags=["directory"])
 
 
 @router.get("/api/emergency", response_model=list[EmergencyContactOut])
-def emergency(db: Session = Depends(get_db)) -> list[EmergencyContactOut]:
+def emergency(db: Session = Depends(get_public_db)) -> list[EmergencyContactOut]:
     rows = db.execute(
         text(
             "select id, name, purpose, phone_number, availability, category, is_demo, source_reference, display_order "
@@ -40,7 +40,7 @@ def emergency(db: Session = Depends(get_db)) -> list[EmergencyContactOut]:
 
 @router.get("/api/legal-aid", response_model=list[LegalAidAuthorityOut])
 def legal_aid(
-    state: str | None = None, level: str | None = None, db: Session = Depends(get_db)
+    state: str | None = None, level: str | None = None, db: Session = Depends(get_public_db)
 ) -> list[LegalAidAuthorityOut]:
     sql = (
         "select id, name, level, state, district, address, phone, website, "

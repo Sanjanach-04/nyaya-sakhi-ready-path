@@ -5,8 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.core.security import CurrentUser
-from app.db import get_db
+from app.core.security import OptionalUser
+from app.db import get_public_db
 from app.schemas import LegalActDetail, LegalActSummary, LegalProvision
 
 router = APIRouter(prefix="/api/legal", tags=["legal"])
@@ -36,10 +36,10 @@ _DOC_SELECT = (
 
 @router.get("/acts", response_model=list[LegalActSummary])
 def acts(
-    user: CurrentUser,
+    user: OptionalUser,
     category: str | None = None,
     q: str | None = None,
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_public_db),
 ) -> list[LegalActSummary]:
     sql = _DOC_SELECT + "where d.status = 'approved'"
     params: dict = {}
@@ -55,7 +55,7 @@ def acts(
 
 
 @router.get("/search", response_model=list[LegalActSummary])
-def search(q: str, user: CurrentUser, db: Session = Depends(get_db)) -> list[LegalActSummary]:
+def search(q: str, user: OptionalUser, db: Session = Depends(get_public_db)) -> list[LegalActSummary]:
     """Search over approved documents AND their chunk text; returns act summaries."""
     rows = db.execute(
         text(
@@ -71,7 +71,7 @@ def search(q: str, user: CurrentUser, db: Session = Depends(get_db)) -> list[Leg
 
 
 @router.get("/acts/{act_id}", response_model=LegalActDetail)
-def act_detail(act_id: str, user: CurrentUser, db: Session = Depends(get_db)) -> LegalActDetail:
+def act_detail(act_id: str, user: OptionalUser, db: Session = Depends(get_public_db)) -> LegalActDetail:
     row = db.execute(
         text(
             _DOC_SELECT
