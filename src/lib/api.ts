@@ -14,11 +14,13 @@
  */
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getApiBaseUrl } from "@/lib/backend-config";
 
-export const API_BASE_URL = ((import.meta.env["VITE_API_BASE_URL"] as string | undefined) ?? "").replace(/\/+$/, "");
+/** Current backend base URL: VITE_API_BASE_URL, else a saved browser override. */
+export { getApiBaseUrl };
 
 export function isBackendConfigured(): boolean {
-  return !!API_BASE_URL;
+  return !!getApiBaseUrl();
 }
 
 export type ApiErrorKind =
@@ -99,10 +101,11 @@ interface RequestOptions {
 export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = "GET", body, anonymous = false, silent = false } = options;
 
+  const API_BASE_URL = getApiBaseUrl();
   if (!API_BASE_URL) {
     const err = new ApiError(
       "unconfigured",
-      "Backend not configured. Set VITE_API_BASE_URL to the Nyaya Sakhi backend URL and restart the app.",
+      "Backend not configured. Set VITE_API_BASE_URL to the Nyaya Sakhi backend URL and rebuild the app.",
     );
     throw err;
   }
@@ -125,7 +128,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   } catch {
     const err = new ApiError(
       "unreachable",
-      "Backend not configured or unreachable. Start the FastAPI backend (see backend/README.md) and set VITE_API_BASE_URL.",
+      `Cannot reach the backend at ${API_BASE_URL}. Check that it is running and allows this site in CORS_ORIGINS.`,
     );
     if (!silent) toast.error(err.message);
     throw err;
