@@ -42,3 +42,9 @@ Decisions (confirmed by user):
 - [x] Typecheck green (tsgo) and vitest suite green
 - [x] Head metadata on routes
 - [ ] Live end-to-end run with the backend started locally (needs user's `backend/.env` with DATABASE_URL + LLM keys; preview shows the designed "backend not configured" states until then)
+
+## Phase 7 — Connection diagnostics & header
+- [x] Public `GET /api/health` (db, embedding_model, llm_configured) + backend test
+- [x] Frontend health check, three diagnostic states, Try again, connection dot, admin/dev-only Backend connection dialog
+- [x] Header: one-line logo, xl-only tagline, short nav labels, hamburger below lg (checked at 360/768/1024/1440)
+- [x] README "Troubleshooting: backend not configured"
