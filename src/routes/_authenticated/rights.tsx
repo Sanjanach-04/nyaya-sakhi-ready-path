@@ -5,6 +5,7 @@ import { BookOpenText, ArrowRight, Search } from "lucide-react";
 import { api, isBackendStateError, type LegalActSummary } from "@/lib/api";
 import { AppShell } from "@/components/app-shell";
 import { BackendUnavailableState } from "@/components/backend-state";
+import { EmptyKnowledgeBase } from "@/components/empty-knowledge-base";
 import { useI18n } from "@/i18n";
 import { Input } from "@/components/ui/input";
 import {
@@ -113,11 +114,15 @@ function Rights() {
           <p className="mt-8 text-sm text-destructive">{t("common.errorGeneric")}</p>
         )}
 
-        {acts.data && filtered.length === 0 && (
+        {acts.data && all.length === 0 && (
+          <div className="mt-8">
+            <EmptyKnowledgeBase />
+          </div>
+        )}
+
+        {acts.data && all.length > 0 && filtered.length === 0 && (
           <p className="mt-8 rounded-2xl border border-dashed border-border bg-muted/40 px-5 py-6 text-sm text-muted-foreground">
-            {search || category !== "all"
-              ? "Nothing matches this filter."
-              : t("rights.noActs")}
+            Nothing matches this filter.
           </p>
         )}
 
