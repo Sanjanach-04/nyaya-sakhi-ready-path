@@ -11,7 +11,7 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useState } from "react";
 
-export const Route = createFileRoute("/_authenticated/schemes/$id")({
+export const Route = createFileRoute("/schemes/$id")({
   head: () => ({
     meta: [
       { title: "Scheme details — Nyaya Sakhi" },

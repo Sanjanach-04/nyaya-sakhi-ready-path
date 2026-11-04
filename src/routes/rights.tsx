@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 
-export const Route = createFileRoute("/_authenticated/rights")({
+export const Route = createFileRoute("/rights")({
   head: () => ({
     meta: [
       { title: "Know Your Rights — Nyaya Sakhi" },

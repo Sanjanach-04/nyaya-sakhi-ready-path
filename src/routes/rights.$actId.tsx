@@ -17,7 +17,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-export const Route = createFileRoute("/_authenticated/rights/$actId")({
+export const Route = createFileRoute("/rights/$actId")({
   head: () => ({
     meta: [
       { title: "Act details — Nyaya Sakhi" },
