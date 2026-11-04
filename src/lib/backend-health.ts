@@ -33,10 +33,10 @@ function isHealthBody(value: unknown): value is BackendHealth {
   if (!value || typeof value !== "object") return false;
   const v = value as Record<string, unknown>;
   return (
-    typeof v.status === "string" &&
-    typeof v.db === "boolean" &&
-    typeof v.embedding_model === "boolean" &&
-    typeof v.llm_configured === "boolean"
+    typeof v["status"] === "string" &&
+    typeof v["db"] === "boolean" &&
+    typeof v["embedding_model"] === "boolean" &&
+    typeof v["llm_configured"] === "boolean"
   );
 }
 
