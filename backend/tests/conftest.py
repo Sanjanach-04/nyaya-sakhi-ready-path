@@ -48,6 +48,7 @@ def client_factory(app: FastAPI):
         user = SimpleNamespace(id=user_id, email="user@example.com", claims={"sub": user_id})
 
         app.dependency_overrides[security.get_current_user] = lambda: user
+        app.dependency_overrides[security.get_optional_user] = lambda: user
 
         def require_admin():
             if not is_admin:
@@ -68,6 +69,9 @@ def client_factory(app: FastAPI):
             mod = importlib.import_module(module)
             if hasattr(mod, "get_db"):
                 app.dependency_overrides[mod.get_db] = override_db
+        import app.db as db_mod
+
+        app.dependency_overrides[db_mod.get_public_db] = override_db
         import app.api.routes.admin as admin_mod
 
         app.dependency_overrides[admin_mod.get_admin_db] = override_db
@@ -100,4 +104,17 @@ def anon_client(app):
         raise HTTPException(status_code=401, detail="Missing bearer token")
 
     app.dependency_overrides[security.get_current_user] = _require_user
+    app.dependency_overrides[security.get_optional_user] = lambda: None
     return TestClient(app, raise_server_exceptions=False)
+
+
+@pytest.fixture(autouse=True)
+def _clear_overrides(app):
+    """Each test starts with no dependency overrides and a fresh guest limiter."""
+    from app.core.rate_limit import guest_chat_limiter
+
+    app.dependency_overrides.clear()
+    guest_chat_limiter.reset()
+    yield
+    app.dependency_overrides.clear()
+    guest_chat_limiter.reset()
