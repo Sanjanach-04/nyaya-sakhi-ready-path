@@ -41,3 +41,27 @@ def test_error_schema_is_consistent(app):
 def test_profile_requires_token(anon_client):
     res = anon_client.get("/api/auth/profile")
     assert res.status_code in (401, 403)
+
+
+def test_forged_and_malformed_tokens_are_401_not_500(app, monkeypatch):
+    import time
+
+    from fastapi.testclient import TestClient
+    from jose import jwt
+
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "SUPABASE_JWT_SECRET", "real-secret-for-test")
+    client = TestClient(app, raise_server_exceptions=False)
+    forged = jwt.encode({"sub": "x", "exp": int(time.time()) + 600}, "wrong-secret", algorithm="HS256")
+    for token in (forged, "not-a-jwt"):
+        res = client.get("/api/legal/acts", headers={"Authorization": f"Bearer {token}"})
+        assert res.status_code == 401, (token, res.status_code)
+
+
+def test_missing_token_rejected_on_data_endpoints(app):
+    from fastapi.testclient import TestClient
+
+    client = TestClient(app, raise_server_exceptions=False)
+    for path in ("/api/legal/acts", "/api/emergency", "/api/schemes", "/api/chat/history"):
+        assert client.get(path).status_code == 401, path

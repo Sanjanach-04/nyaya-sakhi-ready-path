@@ -44,16 +44,28 @@ class AuthUser:
 
 
 def verify_token(token: str) -> dict:
-    """Verify a Supabase access token. Prefers JWKS; falls back to HS256 secret."""
-    header = jwt.get_unverified_header(token)
+    """Verify a Supabase access token. Prefers JWKS; falls back to HS256 secret.
+
+    Any malformed, forged or expired token is a 401 (never a 500). If the
+    JWKS endpoint itself cannot be reached the backend answers 503.
+    """
+    try:
+        header = jwt.get_unverified_header(token)
+    except JOSEError as exc:
+        raise HTTPException(status_code=401, detail="Invalid token") from exc
+
     if settings.SUPABASE_JWT_SECRET and header.get("alg") == "HS256":
-        return jwt.decode(
-            token,
-            settings.SUPABASE_JWT_SECRET,
-            algorithms=["HS256"],
-            audience="authenticated",
-            options={"verify_aud": False},
-        )
+        try:
+            return jwt.decode(
+                token,
+                settings.SUPABASE_JWT_SECRET,
+                algorithms=["HS256"],
+                audience="authenticated",
+                options={"verify_aud": False},
+            )
+        except JOSEError as exc:
+            raise HTTPException(status_code=401, detail=f"Invalid token: {exc}") from exc
+
     kid = header.get("kid")
     if not kid:
         raise HTTPException(status_code=401, detail="Invalid token header")
@@ -79,6 +91,11 @@ def verify_token(token: str) -> dict:
         raise
     except JOSEError as exc:
         raise HTTPException(status_code=401, detail=f"Invalid token: {exc}") from exc
+    except httpx.HTTPError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Cannot verify sign-in: the auth signing keys (SUPABASE_URL JWKS) are unreachable.",
+        ) from exc
 
 
 def get_current_user(

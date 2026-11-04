@@ -98,6 +98,14 @@ export const en = {
   "conn.dialogSaved": "Backend address saved. Checking connection…",
   "conn.currentUrl": "Current address",
 
+  // Empty knowledge base
+  "kb.emptyTitle": "No verified legal documents have been approved yet.",
+  "kb.emptyAdmin":
+    "Upload a document, process it, check the extracted text against the official India Code source, then approve it.",
+  "kb.emptyUser":
+    "Legal answers appear here once an administrator has verified and approved official documents. For help now, contact NALSA (15100) or your State Legal Services Authority.",
+  "kb.openAdmin": "Open Admin",
+
   // Backend states
   "backend.notConfiguredTitle": "Nyaya Sakhi backend is not configured",
   "backend.notConfiguredBody":

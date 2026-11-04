@@ -66,12 +66,38 @@ workflow, provider configuration). Quick start:
 
 ```bash
 cd backend
-python3.11 -m venv .venv && source .venv/bin/activate
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env    # DATABASE_URL, SUPABASE_URL, LLM_* ...
+cp .env.example .env    # DATABASE_URL, SUPABASE_URL, SUPABASE_JWT_SECRET (or JWKS), LLM_*, CORS_ORIGINS
+alembic upgrade head    # vector(768) embeddings, HNSW index, match_legal_chunks
 uvicorn app.main:app --reload --port 8000    # Swagger at /docs
 pytest tests -q
 ```
+
+Then in the repo root put `VITE_API_BASE_URL=http://localhost:8000` in `.env`
+and restart `bun run dev`. Check `http://localhost:8000/api/health` first.
+
+`alembic upgrade head` expects the core tables from `drizzle/migrations/0000–0002`
+(already applied on the cloud database). On a fresh Postgres apply those SQL
+files first, then run Alembic; it is idempotent and safe to re-run.
+
+### Adding legal documents
+
+Until at least one document is approved, Know Your Rights and Ask show
+"No verified legal documents have been approved yet." (with a link to Admin
+for admins). Flow: **upload → process → verify the extracted text against the
+official [India Code](https://www.indiacode.nic.in) text → approve.** From the
+CLI:
+
+```bash
+cd backend
+python -m scripts.ingest --title "Protection of Women from Domestic Violence Act, 2005" \
+  --act-name "Protection of Women from Domestic Violence Act, 2005" \
+  --category family --file ./pwdva-2005.pdf
+# the document stays PENDING — verify chunks in /admin, then Approve
+```
+
+Details: backend/README.md → "Adding legal documents (the safe path)".
 
 ## Troubleshooting: backend not configured
 

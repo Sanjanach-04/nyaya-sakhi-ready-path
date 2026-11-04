@@ -23,6 +23,7 @@ import {
 } from "@/lib/api";
 import { AppShell } from "@/components/app-shell";
 import { BackendUnavailableState } from "@/components/backend-state";
+import { EmptyKnowledgeBase } from "@/components/empty-knowledge-base";
 import { AssistantAnswer } from "@/components/chat/answer-card";
 import { useSpeechRecognition, speakText, stopSpeaking } from "@/hooks/use-speech";
 import { useI18n, type LanguageCode } from "@/i18n";
@@ -99,6 +100,14 @@ export function ChatWorkspace({ threadId }: WorkspaceProps) {
 
   const backendProblem =
     threads.isError && isBackendStateError(threads.error);
+
+  // Same query as Know Your Rights: approved documents only.
+  const approvedActs = useQuery({
+    queryKey: ["legal-acts"],
+    queryFn: () => api.legal.acts(),
+    retry: (count, error) => !isBackendStateError(error) && count < 2,
+  });
+  const knowledgeBaseEmpty = approvedActs.isSuccess && approvedActs.data.length === 0;
 
   const ask = useMutation({
     mutationFn: async (question: string) => {
@@ -401,7 +410,13 @@ export function ChatWorkspace({ threadId }: WorkspaceProps) {
                 )}
               </div>
             ) : messages.length === 0 && !pendingQuestion ? (
-              emptyState
+              knowledgeBaseEmpty ? (
+                <div className="flex flex-1 items-center justify-center px-6 py-8">
+                  <EmptyKnowledgeBase />
+                </div>
+              ) : (
+                emptyState
+              )
             ) : (
               messageList
             )}

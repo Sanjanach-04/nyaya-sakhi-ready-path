@@ -44,7 +44,7 @@ class Settings(BaseSettings):
 
     # Storage / app
     UPLOAD_DIR: str = "./data/uploads"
-    CORS_ORIGINS: str = "http://localhost:8080"
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173,http://localhost:8080"
     LOG_LEVEL: str = "INFO"
 
     @property
