@@ -39,6 +39,9 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-status-ok: var(--status-ok);
+  --color-status-warn: var(--status-warn);
+  --color-status-error: var(--status-error);
   --font-sans: "Work Sans", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Instrument Serif", ui-serif, Georgia, serif;
 }
@@ -66,6 +69,9 @@
   --border: oklch(0.905 0.03 300);
   --input: oklch(0.905 0.03 300);
   --ring: oklch(0.62 0.13 300);
+  --status-ok: oklch(0.62 0.15 150);
+  --status-warn: oklch(0.76 0.15 75);
+  --status-error: oklch(0.6 0.22 27);
 }
 
 .dark {
@@ -90,6 +96,9 @@
   --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 16%);
   --ring: oklch(0.62 0.13 300);
+  --status-ok: oklch(0.62 0.15 150);
+  --status-warn: oklch(0.76 0.15 75);
+  --status-error: oklch(0.6 0.22 27);
 }
 
 @layer base {

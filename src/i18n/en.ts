@@ -46,6 +46,57 @@ export const en = {
   "common.no": "No",
   "common.errorGeneric": "Something went wrong. Please try again.",
 
+
+  // Short header nav labels (must fit on one line)
+  "navShort.dashboard": "Dashboard",
+  "navShort.chat": "Ask",
+  "navShort.rights": "Rights",
+  "navShort.schemes": "Schemes",
+  "navShort.drafter": "Drafter",
+  "navShort.legalAid": "Legal Aid",
+  "navShort.history": "History",
+
+  // Backend connection diagnostics
+  "conn.checking": "Checking the backend connection…",
+  "conn.statusOk": "Backend connected",
+  "conn.statusDegraded": "Backend partly ready",
+  "conn.statusDown": "Backend not connected",
+  "conn.statusChecking": "Checking backend…",
+  "conn.menuItem": "Backend connection",
+  "conn.unconfiguredTitle": "Nyaya Sakhi backend is not configured",
+  "conn.unconfiguredBody":
+    "This app needs the Nyaya Sakhi backend, but no backend address has been set. No demo or fabricated data is shown in the meantime.",
+  "conn.unconfiguredHow":
+    "Set VITE_API_BASE_URL to the backend address (for example https://api.example.org) and rebuild the app. See \"Troubleshooting: backend not configured\" in the README.",
+  "conn.unconfiguredAskAdmin": "Please ask the person running this app to connect the backend.",
+  "conn.unreachableTitle": "Cannot reach the backend",
+  "conn.unreachableBody": "Cannot reach the backend at",
+  "conn.httpStatus": "The address answered with HTTP status",
+  "conn.likelyCauses": "Likely causes",
+  "conn.causeNotRunning": "The backend is not running (start it with uvicorn or docker compose).",
+  "conn.causeCors": "The backend's CORS_ORIGINS setting does not include this site's origin:",
+  "conn.causeMixed": "This site is served over HTTPS but the backend URL uses http:// — browsers block that.",
+  "conn.causeWrongUrl": "The URL is wrong (typo, missing port, or an old tunnel address).",
+  "conn.unhealthyTitle": "The backend is running but not ready",
+  "conn.unhealthyBody": "The backend at this address answered, but some parts are not ready yet:",
+  "conn.partDb": "Database",
+  "conn.partEmbedding": "Embedding model",
+  "conn.partLlm": "LLM API key",
+  "conn.ready": "Ready",
+  "conn.notReady": "Not ready",
+  "conn.okButFailed": "The backend looks healthy, but this page's request failed. Try again in a moment.",
+  "conn.dialogTitle": "Backend connection",
+  "conn.dialogDesc": "Point this browser at a Nyaya Sakhi backend. The address is saved only on this device.",
+  "conn.dialogUrlLabel": "Backend URL",
+  "conn.dialogEnvSet": "This build already sets VITE_API_BASE_URL, so a browser override is not used:",
+  "conn.dialogWarning":
+    "Your login token is sent to this URL with every request. Only enter a backend you run or trust.",
+  "conn.dialogInvalid": "Use an https:// address, or http://localhost for local development.",
+  "conn.dialogSave": "Save and test",
+  "conn.dialogClear": "Remove override",
+  "conn.dialogSaved": "Backend address saved. Checking connection…",
+  "conn.currentUrl": "Current address",
+
   // Backend states
   "backend.notConfiguredTitle": "Nyaya Sakhi backend is not configured",
   "backend.notConfiguredBody":
