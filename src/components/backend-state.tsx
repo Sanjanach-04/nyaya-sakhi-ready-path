@@ -109,7 +109,7 @@ function DiagnosisBody({ diag, canConfigure }: { diag: BackendDiagnosis; canConf
             <li>{t("conn.causeNotRunning")}</li>
             <li>
               {t("conn.causeCors")}{" "}
-              <code className="break-all font-mono text-foreground">{diag.origin || "this site"}</code>
+              <code className="whitespace-nowrap font-mono text-foreground">{diag.origin || "this site"}</code>
             </li>
             <li className={diag.mixedContent ? "font-medium text-foreground" : undefined}>{t("conn.causeMixed")}</li>
             <li>{t("conn.causeWrongUrl")}</li>
