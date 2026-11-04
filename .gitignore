@@ -30,3 +30,23 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Secrets and local environment files
+.env
+.env.*
+!.env.production
+!.env.example
+
+# Python backend
+backend/__pycache__/
+backend/**/__pycache__/
+backend/.venv/
+backend/venv/
+backend/data/uploads/
+backend/*.sqlite3
+backend/.pytest_cache/
+backend/htmlcov/
+backend/.coverage
+
+# OS
+Thumbs.db

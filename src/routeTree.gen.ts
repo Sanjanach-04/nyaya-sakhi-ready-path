@@ -10,33 +10,229 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedDrafterRouteImport } from './routes/_authenticated/drafter'
+import { Route as AuthenticatedEmergencyRouteImport } from './routes/_authenticated/emergency'
+import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
+import { Route as AuthenticatedLegalAidRouteImport } from './routes/_authenticated/legal-aid'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedRightsRouteImport } from './routes/_authenticated/rights'
+import { Route as AuthenticatedSchemesRouteImport } from './routes/_authenticated/schemes'
+import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
+import { Route as AuthenticatedRightsActIdRouteImport } from './routes/_authenticated/rights.$actId'
+import { Route as AuthenticatedSchemesIdRouteImport } from './routes/_authenticated/schemes.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDrafterRoute = AuthenticatedDrafterRouteImport.update({
+  id: '/drafter',
+  path: '/drafter',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedEmergencyRoute = AuthenticatedEmergencyRouteImport.update({
+  id: '/emergency',
+  path: '/emergency',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedLegalAidRoute = AuthenticatedLegalAidRouteImport.update({
+  id: '/legal-aid',
+  path: '/legal-aid',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRightsRoute = AuthenticatedRightsRouteImport.update({
+  id: '/rights',
+  path: '/rights',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSchemesRoute = AuthenticatedSchemesRouteImport.update({
+  id: '/schemes',
+  path: '/schemes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedChatThreadIdRoute =
+  AuthenticatedChatThreadIdRouteImport.update({
+    id: '/$threadId',
+    path: '/$threadId',
+    getParentRoute: () => AuthenticatedChatRoute,
+  } as any)
+const AuthenticatedRightsActIdRoute =
+  AuthenticatedRightsActIdRouteImport.update({
+    id: '/$actId',
+    path: '/$actId',
+    getParentRoute: () => AuthenticatedRightsRoute,
+  } as any)
+const AuthenticatedSchemesIdRoute = AuthenticatedSchemesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthenticatedSchemesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/chat': typeof AuthenticatedChatRouteWithChildren
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/drafter': typeof AuthenticatedDrafterRoute
+  '/emergency': typeof AuthenticatedEmergencyRoute
+  '/history': typeof AuthenticatedHistoryRoute
+  '/legal-aid': typeof AuthenticatedLegalAidRoute
+  '/profile': typeof AuthenticatedProfileRoute
+  '/rights': typeof AuthenticatedRightsRouteWithChildren
+  '/schemes': typeof AuthenticatedSchemesRouteWithChildren
+  '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/rights/$actId': typeof AuthenticatedRightsActIdRoute
+  '/schemes/$id': typeof AuthenticatedSchemesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/chat': typeof AuthenticatedChatRouteWithChildren
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/drafter': typeof AuthenticatedDrafterRoute
+  '/emergency': typeof AuthenticatedEmergencyRoute
+  '/history': typeof AuthenticatedHistoryRoute
+  '/legal-aid': typeof AuthenticatedLegalAidRoute
+  '/profile': typeof AuthenticatedProfileRoute
+  '/rights': typeof AuthenticatedRightsRouteWithChildren
+  '/schemes': typeof AuthenticatedSchemesRouteWithChildren
+  '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/rights/$actId': typeof AuthenticatedRightsActIdRoute
+  '/schemes/$id': typeof AuthenticatedSchemesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/chat': typeof AuthenticatedChatRouteWithChildren
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/drafter': typeof AuthenticatedDrafterRoute
+  '/_authenticated/emergency': typeof AuthenticatedEmergencyRoute
+  '/_authenticated/history': typeof AuthenticatedHistoryRoute
+  '/_authenticated/legal-aid': typeof AuthenticatedLegalAidRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/rights': typeof AuthenticatedRightsRouteWithChildren
+  '/_authenticated/schemes': typeof AuthenticatedSchemesRouteWithChildren
+  '/_authenticated/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/_authenticated/rights/$actId': typeof AuthenticatedRightsActIdRoute
+  '/_authenticated/schemes/$id': typeof AuthenticatedSchemesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/reset-password'
+    | '/admin'
+    | '/chat'
+    | '/dashboard'
+    | '/drafter'
+    | '/emergency'
+    | '/history'
+    | '/legal-aid'
+    | '/profile'
+    | '/rights'
+    | '/schemes'
+    | '/chat/$threadId'
+    | '/rights/$actId'
+    | '/schemes/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/reset-password'
+    | '/admin'
+    | '/chat'
+    | '/dashboard'
+    | '/drafter'
+    | '/emergency'
+    | '/history'
+    | '/legal-aid'
+    | '/profile'
+    | '/rights'
+    | '/schemes'
+    | '/chat/$threadId'
+    | '/rights/$actId'
+    | '/schemes/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/reset-password'
+    | '/_authenticated/admin'
+    | '/_authenticated/chat'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/drafter'
+    | '/_authenticated/emergency'
+    | '/_authenticated/history'
+    | '/_authenticated/legal-aid'
+    | '/_authenticated/profile'
+    | '/_authenticated/rights'
+    | '/_authenticated/schemes'
+    | '/_authenticated/chat/$threadId'
+    | '/_authenticated/rights/$actId'
+    | '/_authenticated/schemes/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +244,188 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/chat': {
+      id: '/_authenticated/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof AuthenticatedChatRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/drafter': {
+      id: '/_authenticated/drafter'
+      path: '/drafter'
+      fullPath: '/drafter'
+      preLoaderRoute: typeof AuthenticatedDrafterRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/emergency': {
+      id: '/_authenticated/emergency'
+      path: '/emergency'
+      fullPath: '/emergency'
+      preLoaderRoute: typeof AuthenticatedEmergencyRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/history': {
+      id: '/_authenticated/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof AuthenticatedHistoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/legal-aid': {
+      id: '/_authenticated/legal-aid'
+      path: '/legal-aid'
+      fullPath: '/legal-aid'
+      preLoaderRoute: typeof AuthenticatedLegalAidRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/rights': {
+      id: '/_authenticated/rights'
+      path: '/rights'
+      fullPath: '/rights'
+      preLoaderRoute: typeof AuthenticatedRightsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/schemes': {
+      id: '/_authenticated/schemes'
+      path: '/schemes'
+      fullPath: '/schemes'
+      preLoaderRoute: typeof AuthenticatedSchemesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/chat/$threadId': {
+      id: '/_authenticated/chat/$threadId'
+      path: '/$threadId'
+      fullPath: '/chat/$threadId'
+      preLoaderRoute: typeof AuthenticatedChatThreadIdRouteImport
+      parentRoute: typeof AuthenticatedChatRoute
+    }
+    '/_authenticated/rights/$actId': {
+      id: '/_authenticated/rights/$actId'
+      path: '/$actId'
+      fullPath: '/rights/$actId'
+      preLoaderRoute: typeof AuthenticatedRightsActIdRouteImport
+      parentRoute: typeof AuthenticatedRightsRoute
+    }
+    '/_authenticated/schemes/$id': {
+      id: '/_authenticated/schemes/$id'
+      path: '/$id'
+      fullPath: '/schemes/$id'
+      preLoaderRoute: typeof AuthenticatedSchemesIdRouteImport
+      parentRoute: typeof AuthenticatedSchemesRoute
+    }
   }
 }
 
+interface AuthenticatedChatRouteChildren {
+  AuthenticatedChatThreadIdRoute: typeof AuthenticatedChatThreadIdRoute
+}
+
+const AuthenticatedChatRouteChildren: AuthenticatedChatRouteChildren = {
+  AuthenticatedChatThreadIdRoute: AuthenticatedChatThreadIdRoute,
+}
+
+const AuthenticatedChatRouteWithChildren =
+  AuthenticatedChatRoute._addFileChildren(AuthenticatedChatRouteChildren)
+
+interface AuthenticatedRightsRouteChildren {
+  AuthenticatedRightsActIdRoute: typeof AuthenticatedRightsActIdRoute
+}
+
+const AuthenticatedRightsRouteChildren: AuthenticatedRightsRouteChildren = {
+  AuthenticatedRightsActIdRoute: AuthenticatedRightsActIdRoute,
+}
+
+const AuthenticatedRightsRouteWithChildren =
+  AuthenticatedRightsRoute._addFileChildren(AuthenticatedRightsRouteChildren)
+
+interface AuthenticatedSchemesRouteChildren {
+  AuthenticatedSchemesIdRoute: typeof AuthenticatedSchemesIdRoute
+}
+
+const AuthenticatedSchemesRouteChildren: AuthenticatedSchemesRouteChildren = {
+  AuthenticatedSchemesIdRoute: AuthenticatedSchemesIdRoute,
+}
+
+const AuthenticatedSchemesRouteWithChildren =
+  AuthenticatedSchemesRoute._addFileChildren(AuthenticatedSchemesRouteChildren)
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedChatRoute: typeof AuthenticatedChatRouteWithChildren
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedDrafterRoute: typeof AuthenticatedDrafterRoute
+  AuthenticatedEmergencyRoute: typeof AuthenticatedEmergencyRoute
+  AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
+  AuthenticatedLegalAidRoute: typeof AuthenticatedLegalAidRoute
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedRightsRoute: typeof AuthenticatedRightsRouteWithChildren
+  AuthenticatedSchemesRoute: typeof AuthenticatedSchemesRouteWithChildren
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedChatRoute: AuthenticatedChatRouteWithChildren,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedDrafterRoute: AuthenticatedDrafterRoute,
+  AuthenticatedEmergencyRoute: AuthenticatedEmergencyRoute,
+  AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
+  AuthenticatedLegalAidRoute: AuthenticatedLegalAidRoute,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedRightsRoute: AuthenticatedRightsRouteWithChildren,
+  AuthenticatedSchemesRoute: AuthenticatedSchemesRouteWithChildren,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
