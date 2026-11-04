@@ -16,7 +16,7 @@ const PUBLIC_CLOUD_FALLBACK: Record<string, string> = {
 };
 
 function cloudFallbackDefine(): Record<string, string> {
-  const mode = process.env.NODE_ENV === "production" ? "production" : "development";
+  const mode = process.env["NODE_ENV"] === "production" ? "production" : "development";
   const loaded = {
     ...loadEnv("production", process.cwd(), "VITE_"),
     ...loadEnv("development", process.cwd(), "VITE_"),
