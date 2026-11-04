@@ -79,12 +79,16 @@ Admin routes (`/api/admin/*`) check this table server-side via
 ## Database migrations
 
 The Supabase/Lovable Cloud instance holds migrations `0000`–`0003`
-(`drizzle/migrations/` in the repo root). The backend also ships an Alembic
-setup for local Postgres use:
+(`drizzle/migrations/` in the repo root). Alembic revision
+`0001_embedding_768` (`alembic/versions/`) makes sure
+`legal_document_chunks.embedding` is `vector(768)`, rebuilds the HNSW index
+and recreates `match_legal_chunks`. It is idempotent (safe on the cloud DB
+where drizzle 0001/0003 already did this). If the column had another
+dimension, old vectors are cleared and every document must be re-processed.
 
 ```bash
-alembic revision --autogenerate -m "..."
-alembic upgrade head
+alembic upgrade head          # after drizzle 0000–0002 exist on the database
+alembic revision -m "..."     # new schema changes (keep models.py in sync)
 ```
 
 Key schema points:
