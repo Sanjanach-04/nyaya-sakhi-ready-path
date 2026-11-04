@@ -51,7 +51,7 @@ export function BackendUnavailableState({ error: _error }: { error?: unknown }) 
 
   return (
     <div
-      className="mx-auto flex max-w-xl flex-col items-center rounded-3xl border border-border/70 bg-card px-6 py-12 text-center sm:px-8"
+      className="mx-auto flex w-full max-w-xl flex-col items-center rounded-3xl border border-border/70 bg-card px-6 py-12 text-center sm:px-8"
       aria-live="polite"
     >
       {!diag ? (
