@@ -21,7 +21,7 @@ export function safeRedirect(target: unknown): string {
     return DEFAULT_AFTER_LOGIN;
   }
   if (/[\u0000-\u001f]/.test(target)) return DEFAULT_AFTER_LOGIN;
-  const pathOnly = target.split(/[?#]/)[0];
+  const pathOnly = target.split(/[?#]/)[0] ?? "";
   if (pathOnly === "/auth" || pathOnly.startsWith("/auth/")) return DEFAULT_AFTER_LOGIN;
   return target;
 }
@@ -35,9 +35,9 @@ export type AuthErrorKind =
   | "other";
 
 interface AuthErrorLike {
-  message?: string;
-  status?: number;
-  code?: string;
+  message?: string | undefined;
+  status?: number | undefined;
+  code?: string | undefined;
 }
 
 /** Map a sign-in / sign-up / resend error to a kind the UI can explain. */
