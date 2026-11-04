@@ -151,6 +151,7 @@ python -m scripts.ingest --title "..." --act-name "..." --file ./act.pdf
 
 | Group | Endpoints |
 | --- | --- |
+| Health (public, no auth) | `GET /api/health` → `{status, db, embedding_model, llm_configured}` (used by the frontend diagnostics) |
 | Auth | `GET/PUT /api/auth/profile` |
 | Chat | `POST /api/chat/ask`, `GET /api/chat/history`, `GET/DELETE /api/chat/history/{id}`, `DELETE /api/chat/history` |
 | Legal | `GET /api/legal/acts`, `GET /api/legal/acts/{id}`, `GET /api/legal/search?q=` (approved only) |
