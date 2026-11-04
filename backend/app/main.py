@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.errors import register_error_handlers
 from app.core.logging import configure_logging
-from app.api.routes import admin, auth, chat, complaints, legal, misc, schemes, speech
+from app.api.routes import admin, auth, chat, complaints, health, legal, misc, schemes, speech
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ app.add_middleware(
 async def log_requests(request: Request, call_next):
     start = time.perf_counter()
     response = await call_next(request)
-    if request.url.path != "/health":
+    if request.url.path not in ("/health", "/api/health"):
         logger.info(
             "%s %s -> %s (%.0f ms)",
             request.method, request.url.path, response.status_code,
@@ -54,6 +54,7 @@ async def log_requests(request: Request, call_next):
 
 register_error_handlers(app)
 
+app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(chat.router)
 app.include_router(legal.router)

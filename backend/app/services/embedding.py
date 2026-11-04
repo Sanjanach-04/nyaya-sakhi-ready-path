@@ -27,6 +27,21 @@ def _get_model():
     return _model_instance
 
 
+def is_model_available() -> bool:
+    """Cheap readiness check for /api/health (never downloads or loads the model).
+
+    True when the model is already loaded, or when sentence-transformers is
+    installed and a model name is configured (it loads lazily on first use).
+    """
+    if _model_instance is not None:
+        return True
+    if not settings.EMBEDDING_MODEL:
+        return False
+    import importlib.util
+
+    return importlib.util.find_spec("sentence_transformers") is not None
+
+
 def embed_texts(texts: list[str]) -> list[list[float]]:
     """Embed a batch of texts. Must match the model used for stored chunks."""
     if not texts:

@@ -11,6 +11,21 @@ def test_health(app):
     assert res.json()["status"] == "ok"
 
 
+def test_api_health_shape_without_auth(app, monkeypatch):
+    from fastapi.testclient import TestClient
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "DATABASE_URL", "")
+    client = TestClient(app)
+    res = client.get("/api/health")  # no Authorization header
+    assert res.status_code == 200
+    body = res.json()
+    assert body["status"] == "ok"
+    assert body["db"] is False  # no DATABASE_URL -> not ready
+    assert set(body) == {"status", "db", "embedding_model", "llm_configured"}
+    assert all(isinstance(body[k], bool) for k in ("db", "embedding_model", "llm_configured"))
+
+
 def test_error_schema_is_consistent(app):
     from fastapi.testclient import TestClient
 
