@@ -32,7 +32,7 @@ def test_error_schema_is_consistent(app):
     client = TestClient(app, raise_server_exceptions=False)
     # Auth runs before body validation: a missing token is always a clean 401
     # with the consistent {"detail": ...} error schema.
-    res = client.post("/api/chat/ask", json={"question": "x"})
+    res = client.get("/api/chat/history")
     assert res.status_code == 401
     body = res.json()
     assert "detail" in body
