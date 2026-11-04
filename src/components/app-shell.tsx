@@ -179,7 +179,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
       <SheetTrigger
         aria-label={t("shell.openMenu")}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-input bg-card transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring lg:hidden"
+        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-input bg-card transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring lg:hidden"
       >
         <Menu className="h-5 w-5" aria-hidden />
       </SheetTrigger>
@@ -217,7 +217,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-7xl items-center gap-2 px-3 sm:px-4">
+        <div className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-3 sm:px-4">
           {mobileDrawer}
           {logo}
           <nav className="ml-2 hidden min-w-0 items-center gap-0.5 lg:flex xl:ml-4" aria-label={t("nav.menu")}>
